@@ -3,11 +3,16 @@ kind: Config
 build:
   tagPolicy:
     gitCommit: {}
-  local: {}
+  local: {} # You are using local Docker builds in Cloud Build, so 'local: {}' is appropriate.
 manifests:
   rawYaml:
     - ./kubernetes/*
 deploy:
-  kubectl: {}
-  logs:
-    prefix: container
+  clouddeploy: # <--- CRITICAL CHANGE: Use the Cloud Deploy deployer
+    targets:
+      - dev    # <--- Reference your 'dev' target from deploy/dev.yaml
+      # - prod # You can add 'prod' here if you want Skaffold to be aware of it
+               # even if your pipeline doesn't promote to it automatically yet.
+               # For initial testing, just 'dev' is fine.
+logs:
+  prefix: container
