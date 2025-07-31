@@ -6,5 +6,5 @@ metadata:
   labels: {}
 description: dev
 gke:
-  cluster: projects/divijesh-project/locations/asia-south1-c/clusters/dev-cluster
+  cluster: projects/divijesh-project/locations/asia-south1/clusters/dev-cluster
 

@@ -7,5 +7,5 @@ metadata:
 description: prod
 requireApproval: true
 gke:
-  cluster: projects/divijesh-project/locations/asia-south1-c/clusters/prod-cluster
+  cluster: projects/divijesh-project/locations/asia-south1/clusters/prod-cluster
 
