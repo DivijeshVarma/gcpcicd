@@ -14,7 +14,7 @@ spec:
     spec:
       containers:
         - name: my-container
-          image: us-central1-docker.pkg.dev/prj-poc-001/gke-repo/quickstart-image
+          image: asia-south1-docker.pkg.dev/divijesh-project/pipeline/app1-image
           ports:
             - containerPort: 8080
 
