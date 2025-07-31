@@ -21,8 +21,10 @@ steps:
   - -xe
   - -c
   - |
+    gcloud components update # (Recommended to keep)
     gcloud deploy apply --file deploy/pipeline.yaml --region=asia-south1
     gcloud deploy apply --file deploy/dev.yaml --region=asia-south1
+    sleep 10 # Add this line
     gcloud deploy releases create 'app-release-${SHORT_SHA}' --delivery-pipeline=gke-cicd-pipeline --region=asia-south1 --skaffold-file=skaffold.yaml
 
 
