@@ -1,31 +1,10 @@
 steps:
+# Build the container image
 - name: 'gcr.io/cloud-builders/docker'
-  args: ['build', '-t', 'asia-south1-docker.pkg.dev/divijesh-project/pipeline/app1-image:latest', './app1' ]
-  id: 'Build Docker Image for App1'
-
+  args: ['build', '-t', 'asia-south1-docker.pkg.dev/divijesh-project/pipeline/app1-image:latest', '.']
+# Push the container image to Artifact Registry
 - name: 'gcr.io/cloud-builders/docker'
-  args: ['push', 'asia-south1-docker.pkg.dev/divijesh-project/pipeline/app1-image:latest' ]
-  id: 'Push Docker Image for App1'
-
-- name: 'gcr.io/cloud-builders/docker'
-  args: ['build', '-t', 'asia-south1-docker.pkg.dev/divijesh-project/pipeline/app2-image:latest', './app2' ]
-  id: 'Build Docker Image for App2'
-
-- name: 'gcr.io/cloud-builders/docker'
-  args: ['push', 'asia-south1-docker.pkg.dev/divijesh-project/pipeline/app2-image:latest' ]
-  id: 'Push Docker Image for App2'
-
-- name: 'google/cloud-sdk:latest'
-  entrypoint: 'sh'
-  args:
-  - -xe
-  - -c
-  - |
-    gcloud deploy apply --file deploy/pipeline.yaml --region=asia-south1
-    gcloud deploy apply --file deploy/dev.yaml --region=asia-south1
-    sleep 10 # Add this line
-    gcloud deploy releases create 'app-release-${SHORT_SHA}' --delivery-pipeline=gke-cicd-pipeline --region=asia-south1 --skaffold-file=skaffold.yaml
-
-
-options:
-  logging: CLOUD_LOGGING_ONLY
+  args: ['push', 'asia-south1-docker.pkg.dev/divijesh-project/pipeline/app1-image:latest']
+# Trigger the Cloud Deploy delivery pipeline
+- name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
+  args: ['gcloud', 'deploy', 'releases', 'create', 'release-$COMMIT_SHA', '--delivery-pipeline', 'demo', '--region', 'asia-south1', '--images', 'app=asia-south1-docker.pkg.dev/divijesh-project/pipeline/app1-image:latest']
