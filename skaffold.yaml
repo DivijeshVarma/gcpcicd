@@ -6,5 +6,4 @@ manifests:
   rawYaml:
   - app1.yaml
 deploy:
-  kubectl:
-    blueGreen: {}
+  kubectl: {}
