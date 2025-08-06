@@ -7,6 +7,16 @@ serialPipeline:
   stages:
   - targetId: test
     profiles: []
+    strategy:
+      canary:
+        runtimeConfig:
+          kubernetes:
+            serviceNetworking:
+              service: "my-service"
+              deployment: "my-deployment"
+        canaryDeployment:
+          percentages: [50]
+          verify: false
   - targetId: staging # <<-- New stage for staging
     profiles: []
     # Add this block to require a manual approval
@@ -34,7 +44,7 @@ apiVersion: deploy.cloud.google.com/v1
 kind: Target
 metadata:
   name: staging
-requireApproval:
+requireApproval: true
 description: staging cluster
 gke:
   cluster: projects/divijesh-project/locations/asia-south1/clusters/staging-cluster
