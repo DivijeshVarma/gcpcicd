@@ -11,21 +11,15 @@ serialPipeline:
     profiles: []
     # Add this block to require a manual approval
     strategy:
-      # Change from `canary` to `blueGreen`
-      blueGreen:
-        # These fields are required for the strategy to work
-        postdeploy:
-          actions: []
-        predeploy:
-          actions: []
+      canary:
         runtimeConfig:
           kubernetes:
             serviceNetworking:
-              # The Kubernetes Service that will be updated to switch traffic
               service: "my-service"
-              # The Kubernetes Deployment that will receive the new image
               deployment: "my-deployment"
-
+        canaryDeployment:
+          percentages: [50]
+          verify: false
 ---
 apiVersion: deploy.cloud.google.com/v1
 kind: Target
