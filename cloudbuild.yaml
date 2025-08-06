@@ -7,7 +7,7 @@ steps:
   args: ['push', 'asia-south1-docker.pkg.dev/divijesh-project/pipeline/app1-image:latest']
 # Trigger the Cloud Deploy delivery pipeline
 - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
-  args: ['gcloud', 'deploy', 'releases', 'create', 'release-$COMMIT_SHA', '--delivery-pipeline', 'demo', '--region', 'asia-south1', '--images', 'app=asia-south1-docker.pkg.dev/divijesh-project/pipeline/app1-image:latest']
+  args: ['gcloud', 'deploy', 'releases', 'create', 'release-$(date +%Y%m%d%H%M%S)', '--delivery-pipeline', 'demo', '--region', 'asia-south1', '--images', 'app=asia-south1-docker.pkg.dev/divijesh-project/pipeline/app1-image:latest']
 
 # Logging 2 
 options:
