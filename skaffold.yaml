@@ -6,4 +6,8 @@ manifests:
   rawYaml:
   - app1.yaml
 deploy:
-  kubectl: {}
+  kubectl:
+    # Add this section to enable the blue/green strategy
+    # The `blueGreen` section should reference your Kubernetes service and deployment.
+    # Note: `blueGreen` is an empty object, as Cloud Deploy provides the detailed configuration.
+    blueGreen: {}
