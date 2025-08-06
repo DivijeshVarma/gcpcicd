@@ -7,4 +7,4 @@ manifests:
   - app1.yaml
 deploy:
   kubectl:
-    blueGreen: {} # <-- This must be indented under `kubectl`
+    blueGreen: {}
