@@ -6,6 +6,7 @@ steps:
 - name: 'gcr.io/cloud-builders/docker'
   args: ['push', 'asia-south1-docker.pkg.dev/divijesh-project/pipeline/app1-image:latest']
 # --- Consolidated Security and Deployment Step ---
+# This single step performs the security scan and conditionally triggers Cloud Deploy.
 - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
   entrypoint: 'bash'
   args:
@@ -19,7 +20,8 @@ steps:
         asia-south1-docker.pkg.dev/divijesh-project/pipeline/app1-image:latest \
         --format='value(vulnerability.severity)' \
         --filter='vulnerability.severity>CRITICAL' \
-        --project='divijesh-project')
+        --project='divijesh-project' \
+        --limit=1)
       
       # Check if the variable is non-empty.
       if [[ -n "$VULNERABILITIES" ]]; then
