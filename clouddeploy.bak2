@@ -7,9 +7,19 @@ serialPipeline:
   stages:
   - targetId: test
     profiles: []
+    strategy:
+      canary:
+        runtimeConfig:
+          kubernetes:
+            serviceNetworking:
+              service: "my-service"
+              deployment: "my-deployment"
+        canaryDeployment:
+          percentages: [50]
+          verify: false
   - targetId: staging # <<-- New stage for staging
     profiles: []
-    # Canary deploy
+    # Add this block to require a manual approval
     strategy:
       canary:
         runtimeConfig:

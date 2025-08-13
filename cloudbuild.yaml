@@ -5,6 +5,25 @@ steps:
 # Push the container image to Artifact Registry
 - name: 'gcr.io/cloud-builders/docker'
   args: ['push', 'asia-south1-docker.pkg.dev/divijesh-project/pipeline/app1-image:latest']
+# --- NEW SECURITY STEP ---
+# Check for vulnerabilities and fail if critical ones exist
+- name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
+  entrypoint: 'bash'
+  args:
+    - '-c'
+    - |
+      # Check for critical vulnerabilities on the image
+      VULNERABILITIES=$(gcloud artifacts docker images list-vulnerabilities \
+        asia-south1-docker.pkg.dev/divijesh-project/pipeline/app1-image:latest \
+        --format='value(vulnerability.severity)' \
+        --filter='vulnerability.severity>CRITICAL' \
+        --project='divijesh-project')
+      if [[ -n "$VULNERABILITIES" ]]; then
+        echo "Found critical vulnerabilities. Deployment blocked."
+        exit 1
+      else
+        echo "No critical vulnerabilities found. Proceeding with deployment."
+      fi
 # Trigger the Cloud Deploy delivery pipeline
 - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
   entrypoint: 'bash'
