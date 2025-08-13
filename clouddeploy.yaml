@@ -7,7 +7,11 @@ serialPipeline:
   stages:
   - targetId: test
     profiles: []
+<<<<<<< HEAD
   - targetId: staging # <<-- New stage for staging
+=======
+  - targetId: staging 
+>>>>>>> 866610df9cedfaea65ab442fdbd990491607b80c
     profiles: []
     # Canary deploy
     strategy:
