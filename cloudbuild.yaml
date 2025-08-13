@@ -13,7 +13,8 @@ steps:
     - |
       echo "Checking for critical vulnerabilities..."
       
-      # Use `gcloud` to list vulnerabilities. The output is stored in a local variable.
+      # Use `gcloud` to list vulnerabilities and store the output in a local shell variable.
+      # This variable is only accessible within this script block.
       VULNERABILITIES=$(gcloud artifacts docker images list-vulnerabilities \
         asia-south1-docker.pkg.dev/divijesh-project/pipeline/app1-image:latest \
         --format='value(vulnerability.severity)' \
@@ -23,10 +24,10 @@ steps:
       # Check if the variable is non-empty.
       if [[ -n "$VULNERABILITIES" ]]; then
         echo "ERROR: Found critical vulnerabilities. Deployment blocked."
-        exit 1  # This will fail the entire build.
+        exit 1  # Fails the entire build.
       else
         echo "No critical vulnerabilities found. Proceeding with Cloud Deploy."
-        # If no vulnerabilities, trigger the deployment from the same script.
+        # If no vulnerabilities, the script continues to trigger the deployment.
         gcloud deploy releases create "release-$COMMIT_SHA" \
           --delivery-pipeline="demo" \
           --region="asia-south1" \
