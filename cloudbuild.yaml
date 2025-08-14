@@ -1,40 +1,26 @@
 steps:
-# Build the container image
+# Build the container images
 - name: 'gcr.io/cloud-builders/docker'
   args: ['build', '-t', 'asia-south1-docker.pkg.dev/divijesh-project/pipeline/app1-image:latest', '.']
-# Push the container image to Artifact Registry
-- name: 'gcr.io/cloud-builders/docker'
-  args: ['push', 'asia-south1-docker.pkg.dev/divijesh-project/pipeline/app1-image:latest']
-# --- Consolidated Security and Deployment Step ---
-# This single step performs the security scan and conditionally triggers Cloud Deploy.
+  id: 'build-app1'
+
+# Scan the container image for vulnerabilities and fail if critical or high severity issues are found
 - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
   entrypoint: 'bash'
-  args:
-    - '-c'
-    - |
-      echo "Checking for critical vulnerabilities..."
-      
-      # Use `gcloud` to list vulnerabilities and store the output in a local shell variable.
-      # This variable is only accessible within this script block.
-      VULNERABILITIES=$(gcloud artifacts docker images list-vulnerabilities \
-        asia-south1-docker.pkg.dev/divijesh-project/pipeline/app1-image:latest \
-        --format='value(vulnerability.severity)' \
-        --filter='vulnerability.severity>CRITICAL' \
-        --project='divijesh-project' \
-        --limit=1)
-      
-      # Check if the variable is non-empty.
-      if [[ -n "$VULNERABILITIES" ]]; then
-        echo "ERROR: Found critical vulnerabilities. Deployment blocked."
-        exit 1  # Fails the entire build.
-      else
-        echo "No critical vulnerabilities found. Proceeding with Cloud Deploy."
-        # If no vulnerabilities, the script continues to trigger the deployment.
-        gcloud deploy releases create "release-$COMMIT_SHA" \
-          --delivery-pipeline="demo" \
-          --region="asia-south1" \
-          --images="app=asia-south1-docker.pkg.dev/divijesh-project/pipeline/app1-image:latest"
-      fi
+  args: ['-c', 'gcloud container on-demand-scanning scan --uri=asia-south1-docker.pkg.dev/divijesh-project/pipeline/app1-image:latest --severity="CRITICAL|HIGH"']
+  id: 'scan-app1'
+  waitFor: ['build-app1']
+
+# Push the container image to Artifact Registry ONLY IF the scan succeeds
+- name: 'gcr.io/cloud-builders/docker'
+  args: ['push', 'asia-south1-docker.pkg.dev/divijesh-project/pipeline/app1-image:latest']
+  waitFor: ['scan-app1']
+
+# Trigger the Cloud Deploy delivery pipeline ONLY IF the push succeeds
+- name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
+  entrypoint: 'bash'
+  args: ['-c', 'gcloud deploy releases create release-$(date +%Y%m%d%H%M%S) --delivery-pipeline demo --region asia-south1 --images app=asia-south1-docker.pkg.dev/divijesh-project/pipeline/app1-image:latest']
+  waitFor: ['scan-app1']
 
 options:
   logging: CLOUD_LOGGING_ONLY
