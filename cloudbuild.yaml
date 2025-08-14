@@ -1,10 +1,14 @@
 steps:
-# Build the container image.
+# Step 1: Build the container image.
+# This step builds the Docker image and tags it using the provided custom substitution variable.
 - name: 'gcr.io/cloud-builders/docker'
   args: ['build', '-t', '${_IMAGE_URI}', '.']
   id: 'build-app1'
 
-# Scan the image for critical vulnerabilities.
+# Step 2: Scan the image for critical vulnerabilities.
+# This step uses the gcloud CLI to trigger an on-demand scan. It then waits for the scan
+# to complete and uses `jq` to check for any vulnerabilities with "CRITICAL" severity.
+# If critical vulnerabilities are found, the step fails, stopping the entire build.
 - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
   entrypoint: 'bash'
   id: 'scan-app1'
@@ -12,30 +16,59 @@ steps:
   args:
     - '-c'
     - |
+      # The bash variable below is local to this step and is not a substitution variable.
+      # It's a common practice to assign the substitution to a shell variable for clarity.
       IMAGE_URI="${_IMAGE_URI}"
+
+      # Trigger an on-demand scan and capture the operation ID.
+      echo "Starting on-demand scan for ${IMAGE_URI}"
       SCAN_OPERATION=$(gcloud artifacts docker images scan "${IMAGE_URI}" --format="value(name)")
+
+      echo "Waiting for scan operation: ${SCAN_OPERATION} to complete..."
+
+      # Wait for the scan to finish.
       gcloud artifacts docker images scan describe "${SCAN_OPERATION}" --wait
+
+      echo "Scan complete. Checking for critical vulnerabilities."
+
+      # Get the vulnerability findings in JSON format and use `jq` to filter for CRITICAL severity.
       CRITICAL_VULNS=$(gcloud artifacts docker images scan findings "${SCAN_OPERATION}" --format=json | jq '[.[] | select(.vulnerability.severity == "CRITICAL")]')
+
+      # Check if the number of critical vulnerabilities is greater than 0.
       if [ "$(echo "$CRITICAL_VULNS" | jq length)" -gt 0 ]; then
         echo "Found CRITICAL vulnerabilities. Build failed."
+        echo "Vulnerabilities found:"
+        echo "$CRITICAL_VULNS" | jq
         exit 1
       else
         echo "No critical vulnerabilities found. Scan passed."
       fi
 
-# Push the container image to Artifact Registry ONLY IF the scan succeeds.
+# Step 3: Push the container image to Artifact Registry.
+# This step is dependent on the `scan-app1` step. It will only run if the vulnerability scan succeeds.
 - name: 'gcr.io/cloud-builders/docker'
   args: ['push', '${_IMAGE_URI}']
   waitFor: ['scan-app1']
 
-# Trigger the Cloud Deploy delivery pipeline ONLY IF the push succeeds.
+# Step 4: Trigger the Cloud Deploy delivery pipeline.
+# This step also depends on the successful completion of the `scan-app1` step.
+# It creates a new release in Cloud Deploy using the image that was scanned and pushed.
 - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
   entrypoint: 'bash'
-  args: ['-c', 'gcloud deploy releases create release-$(date +%Y%m%d%H%M%S) --delivery-pipeline demo --region asia-south1 --images app=${_IMAGE_URI}']
+  args:
+    - '-c'
+    - |
+      gcloud deploy releases create release-$(date +%Y%m%d%H%M%S) \
+        --delivery-pipeline demo \
+        --region asia-south1 \
+        --images app=${_IMAGE_URI}
   waitFor: ['scan-app1']
 
+# Options section specifies global settings for the build.
 options:
   logging: CLOUD_LOGGING_ONLY
 
+# Substitutions section defines custom variables for the build.
+# The `_IMAGE_URI` variable is defined here and its value is used throughout the build.
 substitutions:
   _IMAGE_URI: asia-south1-docker.pkg.dev/divijesh-project/pipeline/app1-image:latest
