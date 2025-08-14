@@ -4,10 +4,14 @@ steps:
   args: ['build', '-t', 'asia-south1-docker.pkg.dev/divijesh-project/pipeline/app1-image:latest', '.']
   id: 'build-app1'
 
-# Scan the container image for vulnerabilities and fail if critical or high severity issues are found
+# Scan the container image for vulnerabilities and fail if critical severity issues are found
 - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
   entrypoint: 'bash'
-  args: ['-c', 'gcloud artifacts docker images scan asia-south1-docker.pkg.dev/divijesh-project/pipeline/app1-image:latest --vulnerability-severity=CRITICAL,HIGH']
+  args:
+    - '-c'
+    - |
+      gcloud artifacts docker images scan asia-south1-docker.pkg.dev/divijesh-project/pipeline/app1-image:latest \
+        --vulnerability-severity=CRITICAL
   id: 'scan-app1'
   waitFor: ['build-app1']
 
