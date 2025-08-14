@@ -16,11 +16,9 @@ steps:
   args:
     - '-c'
     - |
-      IMAGE_URI="${_IMAGE_URI}"
-
       # Trigger an on-demand scan and capture the operation ID.
-      echo "Starting on-demand scan for ${IMAGE_URI}"
-      SCAN_OPERATION=$(gcloud artifacts docker images scan "${IMAGE_URI}" --format="value(name)")
+      echo "Starting on-demand scan for ${_IMAGE_URI}"
+      SCAN_OPERATION=$(gcloud artifacts docker images scan "${_IMAGE_URI}" --format="value(name)")
 
       echo "Waiting for scan operation: ${SCAN_OPERATION} to complete..."
 
