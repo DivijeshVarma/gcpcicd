@@ -7,7 +7,7 @@ steps:
 # Scan the container image for vulnerabilities and fail if critical or high severity issues are found
 - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
   entrypoint: 'bash'
-  args: ['-c', 'gcloud container on-demand-scanning scan --uri=asia-south1-docker.pkg.dev/divijesh-project/pipeline/app1-image:latest --severity="CRITICAL|HIGH"']
+  args: ['-c', 'gcloud artifacts docker images scan --uri=asia-south1-docker.pkg.dev/divijesh-project/pipeline/app1-image:latest --severity="CRITICAL|HIGH"']
   id: 'scan-app1'
   waitFor: ['build-app1']
 
