@@ -1,7 +1,7 @@
 steps:
 # Build the container images
 - name: 'gcr.io/cloud-builders/docker'
-  args: ['build', '-t', 'asia-south1-docker.pkg.dev/divijesh-project/pipeline/app1-image:latest', '.']
+  args: ['build', '-t', '${_IMAGE_URI}', '.']
   id: 'build-app1'
 
 # Scan the container image for vulnerabilities and fail if critical severity issues are found
@@ -12,10 +12,14 @@ steps:
   args:
     - '-c'
     - |
-      IMAGE_URI="asia-south1-docker.pkg.dev/divijesh-project/pipeline/app1-image:latest"
+      # Check for jq dependency
+      if ! command -v jq &> /dev/null; then
+          echo "jq is not installed. Please add a step to install it."
+          exit 1
+      fi
 
       # Trigger an on-demand scan and capture the operation ID
-      SCAN_OPERATION=$(gcloud artifacts docker images scan "${IMAGE_URI}" --format="value(name)")
+      SCAN_OPERATION=$(gcloud artifacts docker images scan "${_IMAGE_URI}" --format="value(name)")
 
       echo "Waiting for scan operation: ${SCAN_OPERATION} to complete..."
 
@@ -38,14 +42,17 @@ steps:
       fi
 # Push the container image to Artifact Registry ONLY IF the scan succeeds
 - name: 'gcr.io/cloud-builders/docker'
-  args: ['push', 'asia-south1-docker.pkg.dev/divijesh-project/pipeline/app1-image:latest']
+  args: ['push', '${_IMAGE_URI}']
   waitFor: ['scan-app1']
 
 # Trigger the Cloud Deploy delivery pipeline ONLY IF the push succeeds
 - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
   entrypoint: 'bash'
-  args: ['-c', 'gcloud deploy releases create release-$(date +%Y%m%d%H%M%S) --delivery-pipeline demo --region asia-south1 --images app=asia-south1-docker.pkg.dev/divijesh-project/pipeline/app1-image:latest']
+  args: ['-c', 'gcloud deploy releases create release-$(date +%Y%m%d%H%M%S) --delivery-pipeline demo --region asia-south1 --images app=${_IMAGE_URI}']
   waitFor: ['scan-app1']
 
 options:
   logging: CLOUD_LOGGING_ONLY
+
+substitutions:
+  _IMAGE_URI: asia-south1-docker.pkg.dev/divijesh-project/pipeline/app1-image:latest
